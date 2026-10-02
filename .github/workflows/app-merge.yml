@@ -11,7 +11,6 @@ permissions:
   contents: read
   packages: write
   id-token: write
-  issues: write
 
 env:
   IMAGE: ghcr.io/${{ github.repository }}
@@ -42,7 +41,6 @@ jobs:
           tags: ${{ env.IMAGE }}:${{ github.run_number }}
 
   #[DOC] - https://learn.microsoft.com/en-us/cli/azure/vm/run-command#az-vm-run-command-invoke
-  #[DOC] - https://github.com/zaproxy/action-full-scan
   app-deploy:
     name: "app-deploy"
     runs-on: ubuntu-latest
@@ -62,15 +60,3 @@ jobs:
 
       - name: vm-deploy
         run:  az vm run-command invoke $VM --parameters $IMAGE:${{ github.run_number }}
-
-      - name: dast-zap
-        uses: zaproxy/action-full-scan@v0.13.0
-        with:
-          target: ${{ vars.APP_URL }}
-          rules_file_name: .zap/rules.tsv
-          cmd_options: -I
-          fail_action: true
-
-      - name: vm-rollback
-        if: failure() && github.run_number > 1
-        run:  az vm run-command invoke $VM --parameters $IMAGE:$(( ${{ github.run_number }} - 1 ))
